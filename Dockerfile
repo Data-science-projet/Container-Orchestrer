@@ -1,13 +1,14 @@
-# Stage 1: Install dependencies
-FROM node:18-alpine AS deps
-WORKDIR /usr/src/app
-COPY package.json yarn.lock* ./
-RUN yarn install --production --frozen-lockfile
+# Stage 1: Build the React app
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+COPY . ./
+RUN yarn build
 
-# Stage 2: Copy code & run
-FROM node:18-alpine
-WORKDIR /usr/src/app
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-COPY . .
-EXPOSE 4000
-CMD ["node", "src/index.js"]
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
