@@ -1,0 +1,33 @@
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    image: bible-api:latest        # explicitly name the built image
+    build:
+      context: ./api
+    container_name: bible-api
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+    depends_on:
+      - mongo
+
+  ui:
+    image: bible-ui:latest         # explicitly name the built image
+    build:
+      context: ./frontend
+    container_name: bible-ui
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:
